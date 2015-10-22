@@ -16,7 +16,7 @@ def register():
 
     data = request.json
 
-    if 'user_fb_id' not in data or 'user_fb_name' not in data:
+    if not data or 'user_fb_id' not in data or 'user_fb_name' not in data:
         return jsonify({'error' : 'Not valid paramaters'}), 400
 
     user = User.query.filter_by(user_fb_id = data['user_fb_id']).first()
@@ -47,8 +47,8 @@ def register():
 def login():
     data = request.json
 
-    if 'username' not in data or 'password' not in data:
-        return jsonify({'result' : 'Not valid paramaters'}), 400
+    if not data or 'username' not in data or 'password' not in data:
+        return jsonify({'error' : 'Not valid paramaters'}), 400
 
     user = User.query.filter_by(username = data['username']).first()
     if user and bcrypt.check_password_hash(
@@ -70,12 +70,12 @@ def logout():
 def create_group():
     data = request.json
 
-    if 'user_fb_id' not in data or 'group_name' not in data:
-        return jsonify({'result' : 'Not valid paramaters'}), 400
+    if not data or 'user_fb_id' not in data or 'group_name' not in data:
+        return jsonify({'error' : 'Not valid paramaters'}), 400
 
     user = User.query.filter_by(user_fb_id = data['user_fb_id']).first()
     if not user:
-        return jsonify({'result' : 'Not valid paramaters'}), 400
+        return jsonify({'error' : 'Not valid paramaters'}), 400
 
     group = Group(
         name = data['group_name'],
@@ -153,6 +153,37 @@ def delete_group(group_id):
 #@login_required
 def update_group():
     pass
+
+
+@app.route('/api/video', methods = ['POST'])
+def create_video():
+    data = request.json
+
+    if not data or not 'user_fb_id' in data or not 'video_s3_path' in data or \
+            not 'group_ids' in data or not 'created_at' in data:
+        pass
+
+    pass
+
+@app.route('/api/group/<int:group_id>/videos', method=['GET'])
+def get_group_videos(group_id):
+    data = request.json
+
+    if not data:
+        return jsonify({"error": "Not valid parameters" }), 400
+
+    group = Group.query.get(group_id)
+    if not group:
+        return jsonify({"error": "Not valid parameters" }), 400
+
+    res = []
+    pass
+
+
+
+
+
+
 
 
 
