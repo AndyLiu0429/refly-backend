@@ -1,5 +1,5 @@
 from app import app, db, bcrypt
-from models import User
+from models import User, Group, Video
 from flask import Flask, request, jsonify, session, g
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.bcrypt import Bcrypt
@@ -16,22 +16,28 @@ def register():
 
     data = request.json
 
-    if 'email' not in data or 'username' not in data or 'password' not in data:
-        return jsonify({'result' : 'Not valid paramaters'}), 400
+    if 'user_fb_id' not in data or 'user_fb_name' not in data:
+        return jsonify({'error' : 'Not valid paramaters'}), 400
+
+    user = User.query.filter_by(user_fb_id = data['user_fb_id']).first()
+
+    if user:
+        return jsonify({"result" : "success"}), 200
 
     user = User(
-        email = data['email'],
-        username = data['username'],
-        password = data['password']
+      user_fb_id= data['user_fb_id'],
+      user_fb_name= data['user_fb_name'],
     )
+
     try:
         db.session.add(user)
         db.session.commit()
         status = 'success'
         code = 200
     except:
-        status = 'User is already registered'
-        code = 409
+        status = 'Service down'
+        code = 500
+
     finally:
         db.session.close()
 
@@ -50,8 +56,7 @@ def login():
         token = user.generate_auth_token()
         code = 200
     else:
-        token = 'bad'
-        code = 404
+        return jsonify({'error' : 'wrong params'}), 404
 
     return jsonify({'token' : token}), code
 
@@ -61,27 +66,91 @@ def logout():
     return jsonify({'result' : 'success'})
 
 @app.route('/api/group', methods = ['POST'])
-@login_required
+#@login_required
 def create_group():
-    return "haah"
+    data = request.json
 
-@app.route('/api/group', methods = ['GET'])
-@login_required
+    if 'user_fb_id' not in data or 'group_name' not in data:
+        return jsonify({'result' : 'Not valid paramaters'}), 400
+
+    user = User.query.filter_by(user_fb_id = data['user_fb_id']).first()
+    if not user:
+        return jsonify({'result' : 'Not valid paramaters'}), 400
+
+    group = Group(
+        name = data['group_name'],
+        description="For test",
+    )
+
+    group.users.append(user)
+
+    try:
+        db.session.add(group)
+        db.session.commit()
+        status = 'success'
+        code = 200
+    except:
+        status = 'Service down'
+        code = 500
+
+    finally:
+        db.session.close()
+
+    return jsonify({'result' : status}), code
+
+
+@app.route('/api/groups', methods = ['GET'])
+#@login_required
 def get_groups():
-    pass
+    data = request.json
+    groups = []
+
+    if data and 'user_fb_id' in data:
+        user = User.query.filter_by(user_fb_id = data['user_fb_id']).first()
+
+        if user:
+            groups = [group.id for group in user.groups]
+    else:
+        groups = [group.id for group in Group.query.all()]
+
+    return jsonify({"group_ids" : groups}), 200
 
 @app.route('/api/group/<int:group_id>', methods = ['GET'])
-@login_required
-def get_group():
-    pass
+#@login_required
+def get_group(group_id):
+    data = request.json
+
+    group = Group.query.get(group_id)
+
+    return jsonify({
+        'group_id' : group.id,
+        'user_ids' : [user.id for user in group.users],
+        'video_ids' : [video.id for video in group.videos],
+        'group_name' : group.name,
+        'group_desc' : group.description,
+        'group_create_time' : group.created_at
+    }), 200
 
 @app.route('/api/group/<int:group_id>', methods = ['DELETE'])
-@login_required
-def delete_group():
-    pass
+#@login_required
+def delete_group(group_id):
+    data = request.json
+
+    group = Group.query.get(group_id)
+
+    try:
+        db.session.delete(group)
+        db.commit()
+        status, code = "success", 200
+    except:
+        status, code = "Service down", 500
+    finally:
+        db.session.close()
+
+    return jsonify({"result" : status}), code
 
 @app.route('/api/group/<int:group_id>', methods = ['PUT'])
-@login_required
+#@login_required
 def update_group():
     pass
 

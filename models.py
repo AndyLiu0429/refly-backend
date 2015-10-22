@@ -13,9 +13,8 @@ user_group = db.Table('user_group',
 class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(20), unique = True, nullable = False)
-    email = db.Column(db.String(255), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable = False)
+    user_fb_id = db.Column(db.String(50), unique = True, nullable = False)
+    user_fb_name = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, nullable=False)
     admin = db.Column(db.Boolean, nullable=False, default=False)
     videos = db.relationship('Video', backref = 'user')
@@ -37,10 +36,9 @@ class User(db.Model):
         user = User.query.get(data['id'])
         return user
 
-    def __init__(self, email, password, username, admin=False):
-        self.email = email
-        self.username = username
-        self.password = bcrypt.generate_password_hash(password)
+    def __init__(self, user_fb_id, user_fb_name, admin=False):
+        self.user_fb_id = user_fb_id
+        self.user_fb_name = user_fb_name
         self.created_at = datetime.datetime.now()
         self.admin = admin
 
@@ -79,21 +77,21 @@ class Group(db.Model):
 class Video(db.Model):
 
     id = db.Column(db.Integer, primary_key = True, autoincrement = True)
-    video_id = db.Column(db.String(50)) # s3 unique id
+    video_s3_path = db.Column(db.String(50)) # s3 unique id
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, nullable = False)
     order = db.Column(db.Integer)
 
-    def __init__(self, video_id, group, user, created_at, order):
-        self.video_id = video_id
-        self.group = group
-        self.user = user
+    def __init__(self, video_s3_path, group_id, user_id, created_at, order):
+        self.video_s3_path = video_s3_path
+        self.group_id = group_id
+        self.user_id = user_id
         self.created_at = created_at
         self.order = order
 
     def __repr__(self):
-        return '<Video {0}>'.format(self.video_id)
+        return '<Video {0}>'.format(self.video_s3_path)
 
 
 
