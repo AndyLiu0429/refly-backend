@@ -65,7 +65,7 @@ def logout():
 
     return jsonify({'result' : 'success'})
 
-@app.route('/api/group', methods = ['POST'])
+@app.route('/api/groups', methods = ['POST'])
 #@login_required
 def create_group():
     data = request.json
