@@ -9,6 +9,9 @@ user_group = db.Table('user_group',
                       db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key = True),
                       db.Column('group_id', db.Integer, db.ForeignKey('group.id'), primary_key = True))
 
+video_group = db.Table('video_group',
+                       db.Column('video_id', db.Integer, db.ForeignKey('video.id'), primary_key = True),
+                        db.Column('group_id', db.Integer, db.ForeignKey('group.id'), primary_key = True))
 
 class User(db.Model):
 
@@ -63,7 +66,7 @@ class Group(db.Model):
     name = db.Column(db.String(50))
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, nullable=False)
-    videos = db.relationship('Video', backref = 'group')
+    videos = db.relationship('Video', secondary = video_group)
     users = db.relationship('User', secondary = user_group)
 
     def __init__(self, name, description):
@@ -78,15 +81,14 @@ class Video(db.Model):
 
     id = db.Column(db.Integer, primary_key = True, autoincrement = True)
     video_s3_path = db.Column(db.String(50)) # s3 unique id
-    group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    groups = db.relationship('Group', secondary = video_group)
+    user_fb_id = db.Column(db.Integer, db.ForeignKey('user.user_fb_id'))
     created_at = db.Column(db.DateTime, nullable = False)
     order = db.Column(db.Integer)
 
-    def __init__(self, video_s3_path, group_id, user_id, created_at, order):
+    def __init__(self, video_s3_path, user_fb_id, created_at, order):
         self.video_s3_path = video_s3_path
-        self.group_id = group_id
-        self.user_id = user_id
+        self.user_fb_id = user_fb_id
         self.created_at = created_at
         self.order = order
 

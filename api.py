@@ -160,12 +160,31 @@ def create_video():
     data = request.json
 
     if not data or not 'user_fb_id' in data or not 'video_s3_path' in data or \
-            not 'group_ids' in data or not 'created_at' in data:
+            not 'group_ids' in data or not 'created_at' in data or not 'order' in data:
         pass
 
-    pass
+    video = Video(
+        video_s3_path=data['video_s3_path'],
+        user_fb_id=data['user_fb_id'],
+        created_at=data['created_at'],
+        order = data['order']
+    )
 
-@app.route('/api/group/<int:group_id>/videos', method=['GET'])
+    for group_id in data['group_ids']:
+        video.groups.append(group_id)
+
+    try:
+        db.session.add(video)
+        db.commit()
+        status, code = "success", 200
+    except:
+        status, code = "service down", 500
+    finally:
+        db.close()
+
+    return jsonify({"result" : status}), code
+
+@app.route('/api/group/<int:group_id>/videos', methods=['GET'])
 def get_group_videos(group_id):
     data = request.json
 
@@ -177,10 +196,16 @@ def get_group_videos(group_id):
         return jsonify({"error": "Not valid parameters" }), 400
 
     res = []
-    pass
+    for video in group.videos:
+        res.append({
+            'video_id': video.id,
+            'video_s3_path': video.video_s3_path,
+            'user_fb_id' : video.user_fb_id,
+            'created_at' : video.created_at,
+            'order' : video.order
+        })
 
-
-
+    return jsonify({'result' : res}), 200
 
 
 
