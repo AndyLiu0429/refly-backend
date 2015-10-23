@@ -6,21 +6,22 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
 user_group = db.Table('user_group',
-                      db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key = True),
-                      db.Column('group_id', db.Integer, db.ForeignKey('group.id'), primary_key = True))
+                      db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key = True),
+                      db.Column('group_id', db.Integer, db.ForeignKey('groups.id'), primary_key = True))
 
 video_group = db.Table('video_group',
-                       db.Column('video_id', db.Integer, db.ForeignKey('video.id'), primary_key = True),
-                        db.Column('group_id', db.Integer, db.ForeignKey('group.id'), primary_key = True))
+                       db.Column('video_id', db.Integer, db.ForeignKey('videos.id'), primary_key = True),
+                        db.Column('group_id', db.Integer, db.ForeignKey('groups.id'), primary_key = True))
 
 class User(db.Model):
+    __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_fb_id = db.Column(db.String(50), unique = True, nullable = False)
     user_fb_name = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, nullable=False)
     admin = db.Column(db.Boolean, nullable=False, default=False)
-    videos = db.relationship('Video', backref = 'user')
+    videos = db.relationship('Video', backref = 'users')
     groups = db.relationship('Group', secondary = user_group)
 
     def generate_auth_token(self, expiration = 1400):
@@ -61,6 +62,7 @@ class User(db.Model):
         return '<User {0}>'.format(self.username)
 
 class Group(db.Model):
+    __tablename__ = 'groups'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(50))
@@ -78,11 +80,12 @@ class Group(db.Model):
         return '<Group {0}>'.format(self.name)
 
 class Video(db.Model):
+    __tablename__ = 'videos'
 
     id = db.Column(db.Integer, primary_key = True, autoincrement = True)
     video_s3_path = db.Column(db.String(50)) # s3 unique id
     groups = db.relationship('Group', secondary = video_group)
-    user_fb_id = db.Column(db.String, db.ForeignKey('user.user_fb_id'))
+    user_fb_id = db.Column(db.String, db.ForeignKey('users.user_fb_id'))
     created_at = db.Column(db.DateTime, nullable = False)
     order = db.Column(db.Integer)
 
