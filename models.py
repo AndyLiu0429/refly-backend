@@ -82,7 +82,7 @@ class Video(db.Model):
     id = db.Column(db.Integer, primary_key = True, autoincrement = True)
     video_s3_path = db.Column(db.String(50)) # s3 unique id
     groups = db.relationship('Group', secondary = video_group)
-    user_fb_id = db.Column(db.Integer, db.ForeignKey('user.user_fb_id'))
+    user_fb_id = db.Column(db.String, db.ForeignKey('user.user_fb_id'))
     created_at = db.Column(db.DateTime, nullable = False)
     order = db.Column(db.Integer)
 
