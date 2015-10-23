@@ -155,13 +155,18 @@ def update_group():
     pass
 
 
-@app.route('/api/video', methods = ['POST'])
+@app.route('/api/videos', methods = ['POST'])
 def create_video():
     data = request.json
 
     if not data or not 'user_fb_id' in data or not 'video_s3_path' in data or \
             not 'group_ids' in data or not 'created_at' in data or not 'order' in data:
         pass
+
+    video = Video.query.filter_by(video_s3_path = data['video_s3_path']).first()
+
+    if video:
+        return jsonify({"result" : "success"}), 200
 
     video = Video(
         video_s3_path=data['video_s3_path'],
@@ -171,25 +176,27 @@ def create_video():
     )
 
     for group_id in data['group_ids']:
-        video.groups.append(group_id)
+        group = Group.query.get(group_id)
+        if group:
+            video.groups.append(group)
 
-    try:
-        db.session.add(video)
-        db.commit()
-        status, code = "success", 200
-    except:
-        status, code = "service down", 500
-    finally:
-        db.close()
+    # try:
+    db.session.add(video)
+    db.session.commit()
+    status, code = "success", 200
+    # except:
+    #      status, code = "service down", 500
+    # finally:
+    db.session.close()
 
     return jsonify({"result" : status}), code
 
 @app.route('/api/group/<int:group_id>/videos', methods=['GET'])
 def get_group_videos(group_id):
-    data = request.json
-
-    if not data:
-        return jsonify({"error": "Not valid parameters" }), 400
+    # data = request.json
+    #
+    # if not data:
+    #     return jsonify({"error": "Not valid parameters" }), 400
 
     group = Group.query.get(group_id)
     if not group:
@@ -208,7 +215,22 @@ def get_group_videos(group_id):
     return jsonify({'result' : res}), 200
 
 
+@app.route('/api/user/<user_fb_id>/groups', methods = ['GET'])
+def get_user_groups(user_fb_id):
 
+    user = User.query.filter_by(user_fb_id=user_fb_id).first()
+
+    if not user :
+        return jsonify({"error" : "wrong user_fb_id"}), 400
+
+    res = [{
+        'group_id' : group.id,
+        'group_name' : group.name,
+        'created_at' : group.created_at,
+        'description' : group.description
+    } for group in user.groups]
+
+    return jsonify({"result" : res}), 200
 
 
 
