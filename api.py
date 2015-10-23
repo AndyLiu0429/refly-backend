@@ -115,6 +115,49 @@ def get_groups():
 
     return jsonify({"group_ids" : groups}), 200
 
+@app.route('/api/group/<int:group_id>/add', methods = ['POST'])
+def add_group_member(group_id):
+    data = request.json
+
+    if not data or not 'user_fb_id':
+        return jsonify({"error" : "Not valid parameters"}), 400
+
+    group = Group.query.get(group_id)
+    user = User.query.filter_by(user_fb_id = data['user_fb_id']).first()
+
+    if not group or not user:
+        return jsonify({"error" : "group not exists"}), 400
+
+    group.users.append(user)
+    user.groups.append(group)
+
+    try:
+        db.session.add(user)
+        db.session.add(group)
+        db.session.commit()
+        status, code = "success", 200
+    except:
+        status, code = "Service down", 500
+
+    finally:
+        db.session.close()
+
+    return jsonify({"result" : status}), code
+
+@app.route('/api/group/<int:group_id>/members', methods = ['GET'])
+def get_group_members(group_id):
+
+    group = Group.query.get(group_id)
+    if not group:
+        return jsonify({"error" : "group not exists"}), 400
+
+    res = [{
+        'user_fb_id' : user.user_fb_id,
+        'user_fb_name' : user.user_fb_name
+    }  for user in group.users]
+
+    return jsonify({"result" : res}), 200
+
 @app.route('/api/group/<int:group_id>', methods = ['GET'])
 #@login_required
 def get_group(group_id):
