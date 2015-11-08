@@ -83,10 +83,12 @@ def create_group():
     )
 
     group.users.append(user)
+    group_id = -1
 
     try:
         db.session.add(group)
         db.session.commit()
+        group_id = group.id
         status = 'success'
         code = 200
     except:
@@ -96,7 +98,7 @@ def create_group():
     finally:
         db.session.close()
 
-    return jsonify({'result' : status, 'group_id' : group.id}), code
+    return jsonify({'result' : status, 'group_id' : group_id}), code
 
 
 @app.route('/api/groups', methods = ['GET'])
@@ -227,12 +229,13 @@ def create_video():
     db.session.add(video)
     db.session.commit()
     status, code = "success", 200
+    video_id = video.id
     # except:
     #      status, code = "service down", 500
     # finally:
     db.session.close()
 
-    return jsonify({"result" : status, 'video_id' : video.id}), code
+    return jsonify({"result" : status, 'video_id' : video_id}), code
 
 @app.route('/api/group/<int:group_id>/videos', methods=['GET'])
 def get_group_videos(group_id):
