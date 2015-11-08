@@ -96,7 +96,7 @@ def create_group():
     finally:
         db.session.close()
 
-    return jsonify({'result' : status}), code
+    return jsonify({'result' : status, 'group_id' : group.id}), code
 
 
 @app.route('/api/groups', methods = ['GET'])
@@ -232,7 +232,7 @@ def create_video():
     # finally:
     db.session.close()
 
-    return jsonify({"result" : status}), code
+    return jsonify({"result" : status, 'video_id' : video.id}), code
 
 @app.route('/api/group/<int:group_id>/videos', methods=['GET'])
 def get_group_videos(group_id):
@@ -275,5 +275,21 @@ def get_user_groups(user_fb_id):
 
     return jsonify({"result" : res}), 200
 
+@app.route('/api/user/<user_fb_id>/videos', methods=['GET'])
+def get_user_videos(user_fb_id):
 
+    user = User.query.filter_by(user_fb_id=user_fb_id).first()
 
+    if not user:
+        return jsonify({"error" : "wrong user_fb_id"}), 400
+
+    res = [
+        {
+            'video_id': video.id,
+            'video_s3_path': video.video_s3_path,
+            'user_fb_id' : video.user_fb_id,
+            'created_at' : video.created_at,
+            'order' : video.order
+        } for video in user.videos]
+
+    return jsonify({"result" : res}), 200
